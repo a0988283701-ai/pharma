@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>藥典 · 每日藥物專論</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Instrument+Sans:wght@400;500;600&family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#E3E7E9;
+  --paper-2:#D6DCE0;
+  --card:#EFF2F3;
+  --ink:#2C363D;
+  --ink-2:#5B6A74;
+  --ink-3:#8E9AA2;
+  --blue:#5F7D91;
+  --blue-deep:#4A6376;
+  --blue-tint:#C8D5DC;
+  --sage:#5D7C77;
+  --sage-tint:#CFDBD8;
+  --rose:#96706C;
+  --rose-tint:#DCCECB;
+  --line:#C3CDD3;
+  --line-soft:#D3DBDF;
+  --serif:'Fraunces','Noto Serif TC',Georgia,serif;
+  --sans:'Instrument Sans','Noto Sans TC',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono','Noto Sans TC',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:transparent;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+::selection{background:var(--blue-tint);}
+
+.app{
+  display:grid;grid-template-columns:264px 1fr;min-height:640px;
+  background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden;
+  background-image:radial-gradient(circle at 1px 1px, rgba(70,95,110,.055) 1px, transparent 0);
+  background-size:22px 22px;
+}
+@media (max-width:780px){.app{grid-template-columns:1fr;}}
+
+/* ---------------- sidebar ---------------- */
+.rail{background:var(--paper-2);border-right:1px solid var(--line);padding:24px 18px;display:flex;flex-direction:column;gap:20px;}
+@media (max-width:780px){.rail{border-right:none;border-bottom:1px solid var(--line);}}
+.mark{display:flex;flex-direction:column;gap:2px;}
+.mark .rx{font-family:var(--serif);font-weight:600;font-size:15px;color:var(--blue);letter-spacing:.02em;}
+.mark .name{font-family:var(--serif);font-weight:600;font-size:23px;line-height:1.05;letter-spacing:.01em;}
+.mark .en{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);margin-top:3px;}
+
+.stat{border:1px solid var(--line);border-radius:3px;background:var(--card);padding:13px 14px;display:flex;flex-direction:column;gap:1px;position:relative;overflow:hidden;}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue);}
+.stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);}
+.stat .v{font-family:var(--serif);font-size:30px;font-weight:600;line-height:1;color:var(--ink);}
+.stat .v small{font-size:13px;color:var(--ink-3);font-family:var(--sans);font-weight:400;}
+
+.rail-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);padding-left:2px;}
+.cats{display:flex;flex-direction:column;gap:1px;}
+.cat{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:3px;font-size:13.5px;color:var(--ink-2);cursor:pointer;border:1px solid transparent;transition:background .15s,color .15s;}
+.cat:hover{background:#CAD3D8;}
+.cat.on{background:var(--ink);color:var(--paper);}
+.cat .c{font-family:var(--mono);font-size:11px;opacity:.65;}
+.rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;}
+
+.btn{font-family:var(--sans);border:1px solid transparent;border-radius:3px;padding:10px 13px;font-size:13.5px;font-weight:600;cursor:pointer;transition:transform .07s,background .15s,border-color .15s;}
+.btn:active{transform:translateY(1px);}
+.btn:focus-visible,.cat:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--sage);outline-offset:2px;}
+.btn-solid{background:var(--ink);color:var(--paper);}
+.btn-solid:hover{background:#3d4a53;}
+.btn-line{background:transparent;color:var(--ink-2);border-color:var(--line);}
+.btn-line:hover{background:#CAD3D8;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover{background:var(--blue-deep);}
+.btn:disabled{opacity:.4;cursor:default;transform:none;}
+.data-row{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:4px;}
+.data-row .sep{color:var(--line);}
+.mini{background:none;border:none;font-family:var(--sans);font-size:11.5px;color:var(--ink-3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:2px;}
+.mini:hover{color:var(--blue);}
+
+/* ---------------- main ---------------- */
+.main{padding:24px 30px 28px;display:flex;flex-direction:column;gap:20px;min-height:640px;}
+.bar{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;border-bottom:1px solid var(--line);padding-bottom:14px;flex-wrap:wrap;}
+.tabs{display:flex;gap:2px;}
+.tab{padding:8px 4px;margin-right:20px;font-size:14px;font-weight:600;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-15px;transition:color .15s;}
+.tab:hover{color:var(--ink-2);}
+.tab.on{color:var(--ink);border-bottom-color:var(--blue);}
+.bar-note{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);}
+.area{flex:1;display:flex;flex-direction:column;}
+
+/* strength pips */
+.pips{display:inline-flex;gap:3px;align-items:center;}
+.pip{width:14px;height:5px;border-radius:1px;background:var(--line);}
+.pip.f{background:var(--blue);}
+.pips.sm .pip{width:9px;height:4px;}
+
+/* eyebrow */
+.eyebrow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);}
+.eyebrow .rx{font-family:var(--serif);font-style:italic;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;}
+.eyebrow .dot{width:3px;height:3px;border-radius:50%;background:var(--line);}
+.eyebrow .flag{color:var(--rose);}
+
+/* ---------- review ---------- */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:8px 0;}
+.progress{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-3);}
+.progress b{color:var(--ink);font-weight:600;}
+
+.card-flip{width:100%;max-width:540px;min-height:340px;perspective:1600px;cursor:pointer;}
+.flipper{position:relative;width:100%;min-height:340px;transition:transform .55s cubic-bezier(.4,.15,.2,1);transform-style:preserve-3d;}
+.card-flip.flip .flipper{transform:rotateY(180deg);}
+.side{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:5px;box-shadow:0 1px 0 #fff inset,0 14px 30px -18px rgba(45,60,72,.28);display:flex;flex-direction:column;overflow:hidden;}
+.side.back{transform:rotateY(180deg);}
+.glass{height:7px;background:linear-gradient(90deg,var(--blue),var(--blue-tint));opacity:.85;flex:none;}
+.side-body{padding:26px 30px;display:flex;flex-direction:column;flex:1;}
+.side.back .side-body{overflow-y:auto;max-height:440px;}
+
+.rx-name{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.08;letter-spacing:.005em;margin-top:14px;}
+.rx-trade{font-family:var(--serif);font-style:italic;font-weight:500;font-size:17px;color:var(--blue);margin-top:5px;}
+.rx-photo{margin-top:16px;max-height:130px;width:auto;max-width:100%;object-fit:contain;border:1px solid var(--line);border-radius:3px;background:#fff;padding:4px;align-self:flex-start;}
+.flip-hint{margin-top:auto;padding-top:18px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);}
+.flip-hint .ln{flex:1;height:1px;background:var(--line);}
+
+.mono-line{font-family:var(--serif);font-weight:600;font-size:22px;margin-bottom:2px;}
+.entry{padding:13px 0;border-top:1px solid var(--line-soft);}
+.entry:first-of-type{border-top:none;padding-top:2px;}
+.entry h4{margin:0 0 5px;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--blue);font-weight:600;display:flex;align-items:center;gap:6px;}
+.entry p{margin:0;font-size:14px;line-height:1.62;color:var(--ink);white-space:pre-wrap;}
+.entry.data p{font-family:var(--mono);font-size:13px;line-height:1.6;}
+.chip{display:inline-block;background:var(--sage-tint);color:var(--sage);border-radius:2px;padding:2px 8px;font-size:12px;font-weight:600;}
+.chip.warn{background:var(--rose-tint);color:var(--rose);}
+
+.verdict{display:flex;gap:12px;width:100%;max-width:540px;}
+.verdict .btn{flex:1;padding:14px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:4px;}
+.v-forgot{background:var(--rose-tint);color:var(--rose);}
+.v-forgot:hover{background:#D2C0BC;}
+.v-good{background:var(--sage-tint);color:var(--sage);}
+.v-good:hover{background:#C0D0CC;}
+
+/* empty / finish */
+.empty{text-align:center;color:var(--ink-2);max-width:380px;margin:auto;padding:40px 20px;}
+.empty .rx-mark{font-family:var(--serif);font-style:italic;font-size:40px;color:var(--blue);opacity:.5;}
+.empty .big{font-family:var(--serif);font-weight:600;font-size:22px;color:var(--ink);margin:10px 0 6px;}
+.empty p{font-size:14px;line-height:1.6;margin:0;}
+
+/* ---------- library ---------- */
+.search{display:flex;gap:10px;margin-bottom:18px;}
+.search input{flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:3px;font-size:14px;background:var(--card);font-family:var(--sans);color:var(--ink);}
+.search input::placeholder{color:var(--ink-3);}
+.cv-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--blue-tint);border:1px solid var(--blue);border-radius:4px;padding:11px 15px;margin-bottom:16px;font-size:13.5px;color:var(--blue-deep);}
+.cv-banner b{font-family:var(--serif);font-size:16px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;}
+.mono-card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:16px 17px;cursor:pointer;transition:border-color .15s,transform .1s,box-shadow .15s;display:flex;flex-direction:column;gap:9px;}
+.mono-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 10px 24px -16px rgba(45,60,72,.32);}
+.mono-card .g{font-family:var(--serif);font-weight:600;font-size:19px;line-height:1.12;}
+.mono-card .t{font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--blue);margin-top:-5px;}
+.mono-card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:2px;}
+.mono-card .nx{font-family:var(--mono);font-size:10px;color:var(--ink-3);}
+.badge{display:inline-block;background:var(--sage-tint);color:var(--sage);font-size:10px;font-weight:700;padding:2px 7px;border-radius:2px;font-family:var(--sans);}
+
+/* ---------- explore ---------- */
+.picker{max-width:500px;margin:auto;display:flex;flex-direction:column;gap:14px;padding:30px 0;}
+.picker .lead{text-align:center;}
+.picker .lead .rx-mark{font-family:var(--serif);font-style:italic;font-size:34px;color:var(--blue);opacity:.55;}
+.picker .lead h3{font-family:var(--serif);font-weight:600;font-size:21px;margin:8px 0 4px;}
+.picker .lead p{font-size:13.5px;color:var(--ink-2);margin:0;}
+.picker select{padding:12px 14px;border:1px solid var(--line);border-radius:3px;font-size:14px;background:var(--card);font-family:var(--sans);color:var(--ink);}
+
+.read{max-width:620px;margin:0 auto;width:100%;}
+.read-rail{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.step{display:flex;align-items:center;gap:8px;flex:1;}
+.step .num{font-family:var(--serif);font-size:13px;font-weight:600;width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-3);flex:none;}
+.step.done .num{background:var(--sage);border-color:var(--sage);color:#fff;}
+.step.cur .num{background:var(--blue);border-color:var(--blue);color:#fff;}
+.step .ln{flex:1;height:1px;background:var(--line);}
+.step:last-child .ln{display:none;}
+
+.folio{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:34px 38px;min-height:300px;box-shadow:0 14px 30px -20px rgba(45,60,72,.28);animation:rise .45s cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.folio .roman{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--blue);letter-spacing:.05em;}
+.folio .ch-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:2px;}
+.folio h2{font-family:var(--serif);font-weight:600;font-size:26px;line-height:1.15;margin:14px 0 16px;}
+.folio .txt{font-size:15px;line-height:1.75;color:var(--ink);white-space:pre-wrap;flex:1;}
+.read-nav{display:flex;justify-content:space-between;margin-top:20px;}
+
+/* ---------- modal ---------- */
+.veil{position:fixed;inset:0;background:rgba(38,50,58,.5);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:60;padding:18px;}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:5px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;padding:26px 28px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4);}
+.sheet h3{font-family:var(--serif);font-weight:600;font-size:22px;margin:0 0 3px;}
+.sheet .sub{font-size:12.5px;color:var(--ink-3);margin-bottom:18px;line-height:1.5;}
+.fld{margin-bottom:13px;}
+.fld label{display:block;font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--ink-2);margin-bottom:5px;letter-spacing:.01em;}
+.fld label .en{color:var(--ink-3);font-weight:400;}
+.fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:3px;font-size:13.5px;font-family:var(--sans);background:var(--card);color:var(--ink);}
+.fld textarea{min-height:62px;resize:vertical;line-height:1.55;}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.rowx{display:grid;grid-template-columns:1fr 1.5fr auto;gap:7px;margin-bottom:8px;align-items:start;}
+.rowx input,.rowx textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:3px;font-size:13px;background:var(--card);font-family:var(--sans);}
+.rowx textarea{min-height:36px;resize:vertical;}
+.rm{background:var(--rose-tint);color:var(--rose);border:none;border-radius:3px;width:32px;height:32px;cursor:pointer;font-size:15px;}
+.sheet-foot{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;align-items:center;}
+.link{background:none;border:none;color:var(--rose);font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;}
+.paste{width:100%;min-height:230px;font-family:var(--mono);font-size:12.5px;padding:13px;border:1px solid var(--line);border-radius:3px;background:var(--card);line-height:1.6;color:var(--ink);}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--paper);padding:11px 20px;border-radius:3px;font-size:13px;z-index:80;opacity:0;transition:opacity .25s,transform .25s;font-weight:500;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.boot{padding:80px 20px;text-align:center;color:var(--ink-3);font-family:var(--serif);font-style:italic;font-size:18px;}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div id="root"><div class="boot">正在展開藥典…</div></div>
+
+<script>
+const CATEGORIES = ["心臟血管","內分泌/代謝","感染科","呼吸/胸腔","腸胃","神經/精神","腎臟","血液/腫瘤","其他"];
+const INTERVALS = [1,3,7,14,30,90];
+const ROMAN = ["Ⅰ","Ⅱ","Ⅲ","Ⅳ"];
+
+const SEED_CARDS = [{
+  id:'seed-sanyl-nicametate',
+  generic:'Nicametate Citrate',
+  trade:'暢力糖衣錠 Sanyl',
+  category:'心臟血管',
+  clinicalContext:'老年門診常見主訴：手腳冰冷、末梢循環不良、輕微頭暈耳鳴。這類非特異性症狀在台灣臨床常被開立末梢循環改善劑作為症狀緩解，暢力即為代表之一。重點認知：它是傳統沿用藥，不是實證主流的疾病治療藥。',
+  mechanism:'菸鹼酸衍生物。核心兩件事：擴張小動脈與微血管（對頭部尤明顯）以改善末梢血流，並促進側支循環建立。確切機轉未完全釐清——這是老藥的通病，記住「證據有限」比背七大作用更重要。',
+  formulation:'糖衣錠 50mg；另有注射劑 50mg/Amp',
+  dosing:'口服 1–2 錠 tid 飯後，療程 10–20 天',
+  commonUsage:'症狀性輔助用藥，少單獨作主力治療；多見於慢性門診短期試用，10–20 天後評估。',
+  appearance:'紅色糖衣圓錠',
+  indications:'末梢血管循環障礙（部分院所延伸列內耳/腦循環障礙）',
+  guideline:'無國際權威指引背書：2024 ACC/AHA 及 ESVS 的 PAD 指引均未提及此藥。屬台灣傳統用藥，非一線建議。',
+  literature:'近期無 nicametate 本身新研究。同屬菸鹼酸家族的 nicotinamide riboside 於 2024 NICE 試驗被研究於 PAD。',
+  extraFields:[
+    {label:'肝腎調整',value:'無明確分級劑量資料，僅高齡減量原則可類推'},
+    {label:'交互作用',value:'無正式臨床記載；理論上與其他血管擴張劑併用可能加成姿勢性低血壓'}
+  ],
+  nextReview:todayStr(),level:0,reviewCount:0
+}];
+
+// 我們在對話中一起建立過的心臟血管藥物（消化重點版，可一鍵載入）
+const CV_PACK = [
+  {generic:'Rosuvastatin',trade:'Crestor 冠脂妥',category:'心臟血管',
+   clinicalContext:'高強度 statin 的首選之一，尤其適合需要大幅降 LDL 又想避開 CYP 交互作用的病人。',
+   mechanism:'HMG-CoA reductase 抑制劑。親水性、幾乎不經 CYP（僅 CYP2C9 約10%），所以交互作用少。',
+   formulation:'口服錠',dosing:'5–40mg qd，任何時段',
+   commonUsage:'高強度 20–40mg；亞洲人血中濃度較高，不論腎功能都建議起始 5mg。',
+   indications:'高膽固醇血症、ASCVD 一級/二級預防',guideline:'2018 ACC/AHA 膽固醇指引高強度 statin 代表',
+   extraFields:[{label:'半衰期',value:'19 小時（長效，不需睡前）'},{label:'腎功能調整',value:'CrCl<30 起始5mg、上限10mg'},{label:'血脂變化',value:'statin 類 ↓LDL20-60% ↓TG10-33% ↑HDL5-10%'}]},
+
+  {generic:'Atorvastatin',trade:'Lipitor 立普妥',category:'心臟血管',
+   clinicalContext:'最廣泛使用的高強度 statin，腎功能不全也不需調整劑量，使用彈性大。',
+   mechanism:'HMG-CoA reductase 抑制劑。親脂性、CYP3A4 代謝。',
+   formulation:'口服錠',dosing:'10–80mg qd，任何時段',
+   commonUsage:'高強度 40–80mg；長效不需指定睡前。',
+   indications:'高膽固醇血症、ASCVD 一級/二級預防',guideline:'2018 ACC/AHA 高強度 statin 代表；TNT、SPARCL',
+   extraFields:[{label:'半衰期',value:'14–30 小時'},{label:'腎功能調整',value:'不需調整'},{label:'交互作用',value:'避免與 cyclosporine 併用；大量葡萄柚汁需留意'}]},
+
+  {generic:'Simvastatin',trade:'Zocor',category:'心臟血管',
+   clinicalContext:'老牌 statin，但在 statin 中交互作用風險最高，開立時要特別查合併用藥。',
+   mechanism:'HMG-CoA reductase 抑制劑。親脂性、CYP3A4 代謝。',
+   formulation:'口服錠',dosing:'5–40mg 睡前（短效）；FDA 不建議 80mg（肌病風險）',
+   indications:'高膽固醇血症',guideline:'2018 ACC/AHA 中強度選項；4S 為首個證實降心血管死亡的 statin',
+   extraFields:[{label:'半衰期',value:'3 小時（短效，須睡前）'},{label:'腎功能調整',value:'CrCl<30 上限40mg'},{label:'交互作用',value:'DDI 風險最高；與強效 CYP3A4 抑制劑併用禁忌；禁併紅麴（Monacolin K 等同重複用藥）'}]},
+
+  {generic:'Pravastatin',trade:'Mevalotin 美百樂鎮',category:'心臟血管',
+   clinicalContext:'不經 CYP 代謝，是多重用藥、肝功能不穩病人的相對安全替代選項。',
+   mechanism:'HMG-CoA reductase 抑制劑。親水性、經 glucuronidation/sulfation（非 CYP）。',
+   formulation:'口服錠',dosing:'10–80mg qd，任何時段',
+   indications:'高膽固醇血症',guideline:'2018 ACC/AHA 中強度選項；WOSCOPS、CARE',
+   extraFields:[{label:'半衰期',value:'2–77 小時（個體差異大）'},{label:'腎功能調整',value:'CrCl<30 上限40mg'},{label:'交互作用',value:'仍為 OATP1B1 受質，與 cyclosporine、gemfibrozil 需注意；整體 DDI 低'}]},
+
+  {generic:'Pitavastatin',trade:'Livalo 力清之',category:'心臟血管',
+   clinicalContext:'非 CYP 代謝、交互作用低，常用於多重用藥或肝功能不穩病人。',
+   mechanism:'HMG-CoA reductase 抑制劑。經 glucuronidation（非 CYP）。',
+   formulation:'口服錠',dosing:'1–4mg qd，任何時段（低強度）',
+   indications:'高膽固醇血症',guideline:'2018 ACC/AHA 低強度 statin',
+   extraFields:[{label:'半衰期',value:'12 小時'},{label:'腎功能調整',value:'中重度上限2mg'},{label:'交互作用',value:'風險低，但仍避免與 cyclosporine 併用'}]},
+
+  {generic:'Fluvastatin',trade:'Lescol',category:'心臟血管',
+   mechanism:'HMG-CoA reductase 抑制劑。CYP2C9（約75%）代謝。',
+   formulation:'口服膠囊/緩釋錠',dosing:'20–80mg；短效睡前、緩釋(XL)不限時段',
+   indications:'高膽固醇血症',guideline:'2018 ACC/AHA 低至中強度選項',
+   extraFields:[{label:'半衰期',value:'3–10.5 小時'},{label:'腎功能調整',value:'不需調整'},{label:'交互作用',value:'與 fluconazole（CYP2C9 抑制劑）併用需注意'}]},
+
+  {generic:'Lovastatin',trade:'Mevacor',category:'心臟血管',
+   clinicalContext:'史上第一個上市的 statin（1987）；與紅麴同源，衛教時的關鍵鑑別點。',
+   mechanism:'HMG-CoA reductase 抑制劑。親脂性、CYP3A4 代謝。',
+   formulation:'口服錠',dosing:'10–80mg 睡前（短效）',
+   indications:'高膽固醇血症',guideline:'2018 ACC/AHA 低至中強度選項',
+   extraFields:[{label:'半衰期',value:'1.7 小時（最短，須睡前）'},{label:'交互作用',value:'CYP3A4 DDI 高；禁併紅麴（Monacolin K 結構同本藥，等同重複用藥）'}]},
+
+  {generic:'Bempedoic acid',trade:'Nexletol',category:'心臟血管',
+   clinicalContext:'statin 不耐受（尤其肌肉痠痛）病人的替代/加成選項——這是它最大的臨床賣點。',
+   mechanism:'ACL 抑制劑（在 statin 作用點 HMGR 的上游）。是 prodrug，需經 ASCVL1 活化；因 ASCVL1 不存在於肌肉細胞，理論上不會造成肌肉痠痛。',
+   formulation:'口服錠 180mg',dosing:'180mg qd（固定劑量）',
+   indications:'高膽固醇血症，statin 不耐受或未達標之加成',guideline:'2020 FDA 核准；列入 2022 ACC/AHA；CLEAR Outcomes 證實降心血管事件',
+   extraFields:[{label:'血脂變化',value:'↓LDL約20%；HDL↓4.5%（方向與多數藥相反，要記）'},{label:'副作用',value:'尿酸↑、痛風、Cre↑、AST/ALT↑、膽結石'},{label:'交互作用',value:'避免與 simvastatin>40mg/day、gemfibrozil 併用'},{label:'核准狀態',value:'已上市'}]},
+
+  {generic:'Evolocumab',trade:'Repatha',category:'心臟血管',
+   clinicalContext:'皮下注射的 PCSK9 單抗，用於高強度 statin 後 LDL 仍未達標的高風險病人。',
+   mechanism:'PCSK9 抑制劑（單株抗體）。抑制 PCSK9 可減少 LDL 受體被降解、加速 LDL 清除。',
+   formulation:'皮下注射',dosing:'140mg q2w 或 420mg 每月',
+   indications:'家族性高膽固醇血症、ASCVD 之 LDL 控制',
+   guideline:'對應試驗是 2017 FOURIER（Sabatine, NEJM 376:1713）——收案為穩定型 ASCVD；顯著降 MACE，HR 0.85',
+   extraFields:[{label:'血脂變化',value:'↓LDL38-72% ↓TG2-23% ↑HDL4-9%'},{label:'副作用',value:'注射部位疼痛'},{label:'易混淆',value:'FOURIER=Evolocumab，別跟 ODYSSEY/Alirocumab 記反'}]},
+
+  {generic:'Alirocumab',trade:'Praluent',category:'心臟血管',
+   clinicalContext:'PCSK9 單抗，臨床試驗族群是近期急性冠心症（ACS）後的病人。',
+   mechanism:'PCSK9 抑制劑（單株抗體），機轉同 evolocumab。',
+   formulation:'皮下注射',dosing:'75–150mg q2w',
+   indications:'家族性高膽固醇血症、ASCVD（尤其近期 ACS）之 LDL 控制',
+   guideline:'對應試驗是 2018 ODYSSEY OUTCOMES（Schwartz, NEJM 379:2097）——ACS 後1-12月、LDL>70；HR 0.85 (0.78–0.93)',
+   extraFields:[{label:'血脂變化',value:'↓LDL38-72% ↓TG2-23% ↑HDL4-9%'},{label:'副作用',value:'注射部位疼痛'},{label:'易混淆',value:'ODYSSEY=Alirocumab'}]},
+
+  {generic:'Inclisiran',trade:'Leqvio',category:'心臟血管',
+   clinicalContext:'一年只打兩針的 PCSK9 siRNA，適合想長期控制又不想頻繁回診施打的病人。',
+   mechanism:'PCSK9 標的 siRNA。經 RNA 干擾抑制 PCSK9 mRNA 轉譯（gene silence），減少 PCSK9 合成。',
+   formulation:'皮下注射（針頭長，需醫療人員施打）',dosing:'284mg，第0、3個月各一針，之後每6個月一次',
+   indications:'高膽固醇血症之 LDL 控制（多為加成治療）',
+   guideline:'ORION-10/11 證實顯著降 LDL（約降50%）；心血管預後試驗 ORION-4 結果待發表',
+   extraFields:[{label:'血脂變化',value:'↓LDL60% ↓TG15% ↑HDL7%'},{label:'台灣健保',value:'尚未給付，自費約每針6-7萬；部分藥廠有病人友善補助方案'},{label:'最大優勢',value:'一年僅2-3針，給藥次數遠少於單抗'}]},
+
+  {generic:'Obicetrapib',trade:'（研發中，尚無商品名）',category:'心臟血管',
+   clinicalContext:'目前發展最前段的第三代 CETP 抑制劑，前幾代（torcetrapib、evacetrapib）因安全或療效問題終止。',
+   mechanism:'CETP 抑制劑。抑制膽固醇酯由 HDL 轉往 LDL/VLDL，使膽固醇酯保留在 HDL。',
+   formulation:'口服（研發中）',dosing:'臨床試驗劑量 10mg qd',
+   indications:'研發中——statin 後 LDL 未達標之加成',
+   guideline:'尚無指引背書；BROADWAY 三期陽性，EMA 審查中，FDA 預後試驗 PREVAIL 預計 2026 下半年',
+   extraFields:[{label:'血脂變化',value:'↓LDL30-50% ↓Lp(a)30-40%'},{label:'核准狀態',value:'臨床試驗階段，尚未上市（2026/7）'}]},
+
+  {generic:'Pelacarsen / Olpasiran',trade:'（研發中，尚無商品名）',category:'心臟血管',
+   clinicalContext:'專門降 Lp(a) 的核酸藥物——若試驗成功，Lp(a) 將首次成為「可治療」的危險因子。',
+   mechanism:'Apo(a) 抑制劑。抑制肝臟 Apo(a) 合成，降低 Lp(a)（Lp(a)=ApoB100+Apo(a)）。Pelacarsen 為 ASO、Olpasiran 為 siRNA。',
+   formulation:'皮下注射（研發中）',dosing:'Pelacarsen 80mg 每月；Olpasiran 每12週',
+   indications:'研發中——Lp(a) 過高合併 ASCVD',
+   guideline:'尚無指引背書；Lp(a)HORIZON、OCEAN(a) 三期預後結果預計 2026 公布',
+   extraFields:[{label:'血脂變化',value:'↓Lp(a) 60-98%，對 LDL/TG 無明顯影響'},{label:'核准狀態',value:'臨床試驗階段，尚未上市（2026/7）'}]},
+
+  {generic:'Evinacumab (ANGPTL3/ApoC3 類)',trade:'Evkeeza 等',category:'心臟血管',
+   clinicalContext:'提升 LPL 活性的一類藥；目前僅在罕見疾病有核准適應症，廣泛降血脂仍在試驗中。',
+   mechanism:'抑制 ANGPTL3 或 ApoC3（兩者為 LPL 的內生抑制物）以提升 LPL 活性，加速 TG-rich 脂蛋白水解。',
+   formulation:'Evinacumab 靜脈注射；其餘多皮下注射',dosing:'Evinacumab 15mg/kg IV q4w（僅 HoFH）',
+   indications:'Evinacumab 僅核准 HoFH；Olezarsen 僅核准 FCS；廣泛降 TG 仍試驗中',
+   guideline:'尚未進入主流血脂指引常規建議，多限罕病核准適應症',
+   extraFields:[{label:'核准狀態',value:'部分已上市但限縮適應症，多數仍臨床試驗'}]},
+
+  {generic:'飲食控制與 LDL 的關係',trade:'（臨床衛教觀念）',category:'心臟血管',
+   clinicalContext:'病人問「能不能不吃藥、只靠飲食控制」時的衛教依據。',
+   mechanism:'膽固醇約65-70%來自肝臟內生合成、僅25-30%來自飲食；LDL 高低主要取決於基因 > 生活型態/環境 > 飲食。',
+   indications:'病人衛教溝通',guideline:'Prev Cardiol 2003；NEJM 1993;328:1150；J Clin Lipidol 2023;17:428',
+   extraFields:[{label:'各介入降幅',value:'不飽和脂肪取代SFA↓5-10%、黏性纖維7.5g↓6-9%、植物固醇2g↓5-8%、植物蛋白30g↓3-5%、減重5%↓3-5%'},{label:'核心結論',value:'所有飲食介入合計 ↓22-37%，仍可能不及一顆 statin——飲食是輔助而非替代'}]}
+];
+
+let state={cards:[],filter:"全部",search:"",view:"review",queue:[],qi:0,flip:false,exId:"",exStep:0};
+let toastT=null;
+
+function uid(){return 'd'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function esc(s){return (s||'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+async function loadData(){
+  try{
+    const r=await window.storage.get('drug-kb',false);
+    if(r&&r.value){state.cards=JSON.parse(r.value);}
+    else{state.cards=SEED_CARDS;await saveData();}
+  }catch(e){state.cards=SEED_CARDS;}
+}
+async function saveData(){
+  try{await window.storage.set('drug-kb',JSON.stringify(state.cards),false);}
+  catch(e){toast('儲存失敗，請稍後再試');}
+}
+function toast(msg){
+  clearTimeout(toastT);
+  let t=document.querySelector('.toast');
+  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('show');
+  toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function mergeCards(incoming){
+  let added=0;
+  incoming.forEach(src=>{
+    const g=(src.generic||'').trim().toLowerCase();
+    if(!g)return;
+    if(state.cards.some(c=>(c.generic||'').trim().toLowerCase()===g))return;
+    const c=JSON.parse(JSON.stringify(src));
+    c.id=c.id||uid();c.nextReview=c.nextReview||todayStr();
+    c.level=c.level||0;c.reviewCount=c.reviewCount||0;
+    state.cards.push(c);added++;
+  });
+  return added;
+}
+function restoreCV(){
+  const n=mergeCards(CV_PACK);
+  saveData();buildQueue();render();
+  toast(n>0?`已載入 ${n} 個心臟血管藥物`:'這些藥物已經都在庫裡了');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(state.cards,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='藥典備份-'+todayStr()+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},100);
+  toast('已下載備份檔，請妥善保存');
+}
+function importData(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.json,application/json';
+  inp.onchange=()=>{
+    const f=inp.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const arr=JSON.parse(r.result);
+        if(!Array.isArray(arr)){toast('檔案格式不對，需要是備份的 JSON');return;}
+        const n=mergeCards(arr);
+        saveData();buildQueue();render();
+        toast(n>0?`已從備份匯入 ${n} 個藥物`:'備份裡的藥物已經都在庫裡了');
+      }catch(e){toast('無法讀取這個檔案，請確認是藥典備份檔');}
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+function isDue(c){return !c.nextReview || c.nextReview<=todayStr();}
+function dueCards(f){return state.cards.filter(c=>isDue(c)&&(f==="全部"||c.category===f));}
+function buildQueue(){state.queue=dueCards(state.filter).sort((a,b)=>(a.nextReview||"").localeCompare(b.nextReview||""));state.qi=0;state.flip=false;}
+function markReview(c,ok){
+  const i=state.cards.findIndex(x=>x.id===c.id);if(i<0)return;
+  let lv=state.cards[i].level||0;lv=ok?Math.min(lv+1,INTERVALS.length-1):0;
+  const n=new Date();n.setDate(n.getDate()+INTERVALS[lv]);
+  state.cards[i].level=lv;state.cards[i].nextReview=n.toISOString().slice(0,10);
+  state.cards[i].reviewCount=(state.cards[i].reviewCount||0)+1;state.cards[i].lastReviewed=todayStr();
+  saveData();
+}
+function pipsHTML(lv){let h='<span class="pips sm">';for(let i=0;i<INTERVALS.length;i++){const on=(lv||0)>0&&i<=(lv||0);h+='<span class="pip'+(on?' f':'')+'"></span>';}return h+'</span>';}
+
+/* ---------------- shell ---------------- */
+function render(){
+  const root=document.getElementById('root');
+  const due=dueCards("全部").length;
+  const cats=["全部",...CATEGORIES];
+  const catHTML=cats.map(c=>{
+    const n=c==="全部"?state.cards.length:state.cards.filter(x=>x.category===c).length;
+    return `<div class="cat ${state.filter===c?'on':''}" tabindex="0" role="button" data-cat="${c}">${c}<span class="c">${n}</span></div>`;
+  }).join('');
+
+  root.innerHTML=`<div class="app">
+    <aside class="rail">
+      <div class="mark"><div class="rx">℞ Materia</div><div class="name">藥典</div><div class="en">daily drug monographs</div></div>
+      <div class="stat"><span class="k">今日待複習</span><span class="v">${due}<small> / ${state.cards.length}</small></span></div>
+      <div class="rail-label">科別</div>
+      <div class="cats">${catHTML}</div>
+      <div class="rail-foot">
+        <button class="btn btn-solid" id="add">＋ 新增藥物</button>
+        <button class="btn btn-line" id="batch">批次貼上</button>
+        <div class="data-row">
+          <button class="mini" id="exp">匯出備份</button>
+          <span class="sep">·</span>
+          <button class="mini" id="imp">匯入備份</button>
+        </div>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="bar">
+        <nav class="tabs">
+          <div class="tab ${state.view==='review'?'on':''}" data-v="review">今日複習</div>
+          <div class="tab ${state.view==='library'?'on':''}" data-v="library">藥典庫</div>
+          <div class="tab ${state.view==='explore'?'on':''}" data-v="explore">深讀</div>
+        </nav>
+        <div class="bar-note">${state.filter==="全部"?'全部科別':state.filter}</div>
+      </div>
+      <div class="area" id="area"></div>
+    </main>
+  </div>`;
+
+  root.querySelectorAll('.cat').forEach(el=>{
+    el.onclick=()=>{state.filter=el.dataset.cat;buildQueue();render();};
+    el.onkeydown=e=>{if(e.key==='Enter')el.click();};
+  });
+  root.querySelectorAll('.tab').forEach(el=>el.onclick=()=>{state.view=el.dataset.v;render();});
+  document.getElementById('add').onclick=()=>openEdit(null);
+  document.getElementById('batch').onclick=openBatch;
+  document.getElementById('exp').onclick=exportData;
+  document.getElementById('imp').onclick=importData;
+
+  if(state.view==='review')renderReview();
+  else if(state.view==='library')renderLibrary();
+  else renderExplore();
+}
+
+/* ---------------- review ---------------- */
+function renderReview(){
+  const area=document.getElementById('area');
+  if(state.queue.length===0)buildQueue();
+  if(state.queue.length===0){
+    area.innerHTML=`<div class="stage"><div class="empty"><div class="rx-mark">℞</div><div class="big">今天沒有到期的藥物</div><p>都複習完了。到「藥典庫」新增藥物，或用「深讀」深入認識一個新藥。</p></div></div>`;return;
+  }
+  if(state.qi>=state.queue.length){
+    area.innerHTML=`<div class="stage"><div class="empty"><div class="rx-mark">℞</div><div class="big">本輪完成</div><p>今天複習了 ${state.queue.length} 個藥物。明天再回來，間隔會自動幫你安排。</p></div></div>`;return;
+  }
+  const c=state.queue[state.qi];
+  const fresh=(c.reviewCount||0)===0;
+  const entries=[];
+  const add=(label,val,cls)=>{if(val&&val.trim())entries.push(`<div class="entry ${cls||''}"><h4>${label}</h4><p>${esc(val)}</p></div>`);};
+  add('機轉',c.mechanism);
+  if((c.formulation&&c.formulation.trim())||(c.dosing&&c.dosing.trim())){
+    entries.push(`<div class="entry data"><h4>劑型 · 劑量</h4><p>${esc([c.formulation,c.dosing].filter(x=>x&&x.trim()).join('\n'))}</p></div>`);
+  }
+  add('常見用法',c.commonUsage);
+  add('適應症',c.indications);
+  if(c.guideline&&c.guideline.trim())entries.push(`<div class="entry"><h4>指引地位</h4><p><span class="chip">${esc(c.guideline)}</span></p></div>`);
+  add('近期文獻',c.literature);
+  (c.extraFields||[]).filter(f=>f.label&&f.value).forEach(f=>add(esc(f.label),f.value));
+
+  area.innerHTML=`<div class="stage">
+    <div class="progress"><b>${state.qi+1}</b> / ${state.queue.length}　·　熟練度 ${pipsHTML(c.level)}</div>
+    <div class="card-flip ${state.flip?'flip':''}" id="flip">
+      <div class="flipper">
+        <div class="side front"><div class="glass"></div><div class="side-body">
+          <div class="eyebrow"><span class="rx">℞</span><span>${esc(c.category||'未分類')}</span>${fresh?'<span class="dot"></span><span class="flag">新藥物</span>':''}</div>
+          <div class="rx-name">${esc(c.generic||'(未命名)')}</div>
+          ${c.trade?`<div class="rx-trade">${esc(c.trade)}</div>`:''}
+          ${c.photoUrl?`<img src="${esc(c.photoUrl)}" class="rx-photo" alt="外觀" onerror="this.style.display='none'">`:''}
+          <div class="flip-hint"><span class="ln"></span>翻面看重點<span class="ln"></span></div>
+        </div></div>
+        <div class="side back"><div class="glass"></div><div class="side-body">
+          <div class="mono-line">${esc(c.generic||'')}</div>
+          ${entries.join('')||'<p style="color:var(--ink-3);font-size:13px;">這張卡還沒有內容，點藥典庫編輯補上。</p>'}
+        </div></div>
+      </div>
+    </div>
+    <div class="verdict">
+      <button class="btn v-forgot" id="forgot">再看一次</button>
+      <button class="btn v-good" id="good">記得了</button>
+    </div>
+  </div>`;
+
+  document.getElementById('flip').onclick=()=>{state.flip=!state.flip;render();};
+  document.getElementById('forgot').onclick=e=>{e.stopPropagation();markReview(c,false);state.qi++;state.flip=false;render();};
+  document.getElementById('good').onclick=e=>{e.stopPropagation();markReview(c,true);state.qi++;state.flip=false;render();};
+}
+
+/* ---------------- library ---------------- */
+function renderLibrary(){
+  const area=document.getElementById('area');
+  let list=state.cards.filter(c=>state.filter==="全部"||c.category===state.filter);
+  const q=state.search.trim().toLowerCase();
+  if(q)list=list.filter(c=>(c.generic||'').toLowerCase().includes(q)||(c.trade||'').toLowerCase().includes(q));
+  const cards=list.map(c=>`<div class="mono-card" data-id="${c.id}">
+    <div class="eyebrow"><span class="rx">℞</span><span>${esc(c.category||'未分類')}</span></div>
+    <div class="g">${esc(c.generic||'(未命名)')}</div>
+    ${c.trade?`<div class="t">${esc(c.trade)}</div>`:''}
+    <div class="foot">${pipsHTML(c.level)}${c.deepLearned?'<span class="badge">✓ 已深讀</span>':`<span class="nx">下次 ${c.nextReview||todayStr()}</span>`}</div>
+  </div>`).join('');
+  const missingCV=CV_PACK.filter(s=>!state.cards.some(c=>(c.generic||'').trim().toLowerCase()===(s.generic||'').trim().toLowerCase())).length;
+  const cvBanner=missingCV>0?`<div class="cv-banner"><span>還有我們一起建立過的 <b>${missingCV}</b> 個心臟血管藥物可以還原。</span><button class="btn btn-blue" id="loadcv">一鍵載入</button></div>`:'';
+  area.innerHTML=`<div class="search"><input id="q" placeholder="搜尋學名或商品名…" value="${esc(state.search)}"></div>`+cvBanner+
+    (list.length?`<div class="grid">${cards}</div>`:`<div class="empty"><div class="rx-mark">℞</div><div class="big">${q?'找不到符合的藥':'這個科別還沒有藥物'}</div><p>${q?'換個關鍵字試試。':'用左側「＋新增藥物」或「批次貼上」開始建立。'}</p></div>`);
+  const qi=document.getElementById('q');
+  qi.oninput=()=>{state.search=qi.value;renderLibrary();};
+  const lcv=document.getElementById('loadcv');if(lcv)lcv.onclick=restoreCV;
+  area.querySelectorAll('.mono-card').forEach(el=>el.onclick=()=>openEdit(state.cards.find(x=>x.id===el.dataset.id)));
+}
+
+/* ---------------- explore ---------------- */
+function chapters(c){
+  return [
+    {label:'臨床情境',title:'為什麼要學這個藥？',txt:c.clinicalContext||'（尚未填寫臨床情境。到藥典庫編輯這張卡補上，下次深讀會更完整。）'},
+    {label:'藥理機轉',title:'它是怎麼作用的？',txt:c.mechanism||'（尚未填寫機轉。）'},
+    {label:'指引地位',title:'在治療指引中的位置',txt:(c.guideline||'（尚未填寫指引資料。）')+(c.literature?`\n\n近期文獻｜${c.literature}`:'')},
+    {label:'完整資訊',title:c.generic||'藥物詳細資料',txt:
+      [c.formulation&&`劑型｜${c.formulation}`,c.dosing&&`常用劑量｜${c.dosing}`,c.commonUsage&&`常見用法｜${c.commonUsage}`,c.indications&&`適應症｜${c.indications}`,c.appearance&&`外型｜${c.appearance}`]
+      .filter(Boolean).join('\n')
+      +((c.extraFields||[]).filter(f=>f.label&&f.value).length?'\n\n'+(c.extraFields||[]).filter(f=>f.label&&f.value).map(f=>`${f.label}｜${f.value}`).join('\n'):'')
+    }
+  ];
+}
+function renderExplore(){
+  const area=document.getElementById('area');
+  if(!state.exId){
+    if(state.cards.length===0){area.innerHTML=`<div class="empty"><div class="rx-mark">℞</div><div class="big">藥典庫還是空的</div><p>先新增至少一個藥物，才能開始深讀。</p></div>`;return;}
+    const opts=state.cards.map(c=>`<option value="${c.id}">${esc(c.generic||'(未命名)')}${c.trade?' — '+esc(c.trade):''}${c.deepLearned?'　✓已深讀':''}</option>`).join('');
+    area.innerHTML=`<div class="picker">
+      <div class="lead"><div class="rx-mark">℞</div><h3>深讀一個藥</h3><p>依序讀完四個章節：臨床情境 → 機轉 → 指引地位 → 完整資訊，讀完自動進入複習排程。</p></div>
+      <select id="pick">${opts}</select>
+      <button class="btn btn-blue" id="start">開始深讀</button>
+    </div>`;
+    document.getElementById('start').onclick=()=>{state.exId=document.getElementById('pick').value;state.exStep=0;renderExplore();};
+    return;
+  }
+  const c=state.cards.find(x=>x.id===state.exId);
+  if(!c){state.exId="";renderExplore();return;}
+  const chs=chapters(c);
+  if(state.exStep>=chs.length){
+    if(!c.deepLearned){c.deepLearned=true;saveData();}
+    area.innerHTML=`<div class="read"><div class="empty"><div class="rx-mark">℞</div><div class="big">已讀完《${esc(c.generic||'')}》</div><p>這張卡已進入複習排程，之後會依間隔再出現，幫你長期記住。</p><br><button class="btn btn-blue" id="fin">回到選擇</button></div></div>`;
+    document.getElementById('fin').onclick=()=>{state.exId="";state.exStep=0;render();};return;
+  }
+  const ch=chs[state.exStep];
+  const steps=chs.map((s,i)=>`<div class="step ${i<state.exStep?'done':(i===state.exStep?'cur':'')}"><span class="num">${i<state.exStep?'✓':i+1}</span><span class="ln"></span></div>`).join('');
+  area.innerHTML=`<div class="read">
+    <div class="read-rail">${steps}</div>
+    <div class="folio">
+      <div class="roman">${ROMAN[state.exStep]}</div>
+      <div class="ch-label">${esc(ch.label)}</div>
+      <h2>${esc(ch.title)}</h2>
+      <div class="txt">${esc(ch.txt)}</div>
+    </div>
+    <div class="read-nav">
+      <button class="btn btn-line" id="prev" ${state.exStep===0?'disabled':''}>← 上一章</button>
+      <button class="btn btn-blue" id="next">${state.exStep===chs.length-1?'完成深讀':'繼續 →'}</button>
+    </div>
+  </div>`;
+  document.getElementById('prev').onclick=()=>{if(state.exStep>0){state.exStep--;renderExplore();}};
+  document.getElementById('next').onclick=()=>{state.exStep++;renderExplore();};
+}
+
+/* ---------------- edit modal ---------------- */
+function openEdit(card){
+  const isNew=!card;
+  const c=card||{id:uid(),category:CATEGORIES[0]};
+  const veil=document.createElement('div');veil.className='veil';
+  veil.innerHTML=`<div class="sheet">
+    <h3>${isNew?'新增藥物':'編輯藥物'}</h3>
+    <div class="sub">建議查證權威指引（ACC/AHA、ADA、IDSA、KDIGO 等）後填入。內容以「複習用的重點」為主，不必照抄仿單。</div>
+    <div class="duo">
+      <div class="fld"><label>學名 <span class="en">Generic</span></label><input id="f_gen" value="${esc(c.generic||'')}"></div>
+      <div class="fld"><label>商品名 <span class="en">Trade</span></label><input id="f_tra" value="${esc(c.trade||'')}"></div>
+    </div>
+    <div class="fld"><label>科別</label><select id="f_cat">${CATEGORIES.map(x=>`<option ${c.category===x?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="fld"><label>臨床情境 <span class="en">為什麼要學它 · 深讀第一章</span></label><textarea id="f_ctx">${esc(c.clinicalContext||'')}</textarea></div>
+    <div class="fld"><label>機轉 <span class="en">Mechanism</span></label><textarea id="f_mec">${esc(c.mechanism||'')}</textarea></div>
+    <div class="duo">
+      <div class="fld"><label>劑型 <span class="en">Formulation</span></label><input id="f_for" value="${esc(c.formulation||'')}"></div>
+      <div class="fld"><label>常用劑量 <span class="en">Dosing</span></label><input id="f_dos" value="${esc(c.dosing||'')}"></div>
+    </div>
+    <div class="fld"><label>常見用法 <span class="en">臨床實務慣例</span></label><textarea id="f_cu">${esc(c.commonUsage||'')}</textarea></div>
+    <div class="fld"><label>藥物外觀照片網址 <span class="en">Photo URL</span></label><input id="f_pho" value="${esc(c.photoUrl||'')}" placeholder="https://…"></div>
+    <div class="fld"><label>外型描述 <span class="en">顏色 · 形狀 · 標記</span></label><input id="f_app" value="${esc(c.appearance||'')}"></div>
+    <div class="fld"><label>適應症 <span class="en">Indications</span></label><textarea id="f_ind">${esc(c.indications||'')}</textarea></div>
+    <div class="fld"><label>指引地位 <span class="en">權威學會依據</span></label><input id="f_gl" value="${esc(c.guideline||'')}"></div>
+    <div class="fld"><label>近期文獻 <span class="en">重點摘要</span></label><textarea id="f_lit">${esc(c.literature||'')}</textarea></div>
+    <div class="fld"><label>自訂欄位 <span class="en">健保碼 · 儲存條件 · 交互作用…任何你想加的</span></label><div id="extra"></div><button type="button" class="btn btn-line" id="addField" style="margin-top:5px;">＋ 新增欄位</button></div>
+    <div class="sheet-foot">
+      ${!isNew?'<button class="link" id="del" style="margin-right:auto;">刪除這筆</button>':''}
+      <button class="btn btn-line" id="cancel">取消</button>
+      <button class="btn btn-blue" id="save">儲存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(veil);
+  let extra=JSON.parse(JSON.stringify(c.extraFields||[]));
+  function drawExtra(){
+    const w=document.getElementById('extra');
+    w.innerHTML=extra.map((f,i)=>`<div class="rowx"><input class="ef-l" placeholder="欄位名稱" value="${esc(f.label||'')}"><textarea class="ef-v" placeholder="內容">${esc(f.value||'')}</textarea><button type="button" class="rm" data-i="${i}">✕</button></div>`).join('');
+    w.querySelectorAll('.rm').forEach(b=>b.onclick=()=>{extra.splice(+b.dataset.i,1);drawExtra();});
+  }
+  drawExtra();
+  document.getElementById('addField').onclick=()=>{extra.push({label:'',value:''});drawExtra();};
+  veil.onclick=e=>{if(e.target===veil)veil.remove();};
+  document.getElementById('cancel').onclick=()=>veil.remove();
+  const del=document.getElementById('del');
+  if(del)del.onclick=()=>{state.cards=state.cards.filter(x=>x.id!==c.id);saveData();veil.remove();buildQueue();render();toast('已刪除');};
+  document.getElementById('save').onclick=()=>{
+    c.generic=document.getElementById('f_gen').value.trim();
+    c.trade=document.getElementById('f_tra').value.trim();
+    c.category=document.getElementById('f_cat').value;
+    c.clinicalContext=document.getElementById('f_ctx').value.trim();
+    c.mechanism=document.getElementById('f_mec').value.trim();
+    c.formulation=document.getElementById('f_for').value.trim();
+    c.dosing=document.getElementById('f_dos').value.trim();
+    c.commonUsage=document.getElementById('f_cu').value.trim();
+    c.photoUrl=document.getElementById('f_pho').value.trim();
+    c.appearance=document.getElementById('f_app').value.trim();
+    c.indications=document.getElementById('f_ind').value.trim();
+    c.guideline=document.getElementById('f_gl').value.trim();
+    c.literature=document.getElementById('f_lit').value.trim();
+    c.extraFields=Array.from(document.querySelectorAll('#extra .rowx')).map(r=>({label:r.querySelector('.ef-l').value.trim(),value:r.querySelector('.ef-v').value.trim()})).filter(f=>f.label);
+    if(!c.generic){toast('請至少填寫學名');return;}
+    if(isNew){c.nextReview=todayStr();c.level=0;c.reviewCount=0;state.cards.push(c);}
+    else{const i=state.cards.findIndex(x=>x.id===c.id);state.cards[i]=c;}
+    saveData();veil.remove();buildQueue();render();toast('已儲存');
+  };
+}
+
+/* ---------------- batch ---------------- */
+function openBatch(){
+  const veil=document.createElement('div');veil.className='veil';
+  veil.innerHTML=`<div class="sheet">
+    <h3>批次貼上</h3>
+    <div class="sub">每個藥一段，欄位用「標籤：內容」，段落之間用一行 --- 分隔。沒列出的標籤（如「健保碼」）會自動存成自訂欄位。若貼上與現有藥物同名，會更新那張卡而不是新增重複卡。</div>
+    <textarea class="paste" id="paste" placeholder="學名：Atorvastatin&#10;商品名：Lipitor&#10;分類：心臟血管&#10;臨床情境：…&#10;機轉：…&#10;常用劑量：…&#10;指引：…"></textarea>
+    <div class="sheet-foot">
+      <button class="btn btn-line" id="cancel2">取消</button>
+      <button class="btn btn-blue" id="parse">解析並存入</button>
+    </div>
+  </div>`;
+  document.body.appendChild(veil);
+  veil.onclick=e=>{if(e.target===veil)veil.remove();};
+  document.getElementById('cancel2').onclick=()=>veil.remove();
+  document.getElementById('parse').onclick=()=>{
+    const raw=document.getElementById('paste').value;
+    const blocks=raw.split(/\n-{3,}\s*(?:\n|$)/).map(b=>b.trim()).filter(Boolean);
+    let added=0,updated=0;
+    blocks.forEach(block=>{
+      const o={extraFields:[]};
+      block.split('\n').forEach(line=>{
+        const m=line.match(/^\s*([^:：]+)[:：]\s*(.*)$/);if(!m)return;
+        const k=m[1].trim(),v=m[2].trim();
+        if(/商品名|trade/i.test(k))o.trade=v;
+        else if(/學名|generic/i.test(k))o.generic=v;
+        else if(/分類|科別|category/i.test(k))o.category=CATEGORIES.find(x=>x===v)||v;
+        else if(/臨床情境|背景|context/i.test(k))o.clinicalContext=v;
+        else if(/機轉|mechanism/i.test(k))o.mechanism=v;
+        else if(/劑型|formulation/i.test(k))o.formulation=v;
+        else if(/常見用法|common usage/i.test(k))o.commonUsage=v;
+        else if(/劑量|dose|dosing/i.test(k))o.dosing=v;
+        else if(/照片|photo/i.test(k))o.photoUrl=v;
+        else if(/外型|外觀|appearance/i.test(k))o.appearance=v;
+        else if(/適應症|indication/i.test(k))o.indications=v;
+        else if(/guideline|指引/i.test(k))o.guideline=v;
+        else if(/文獻|literature/i.test(k))o.literature=v;
+        else o.extraFields.push({label:k,value:v});
+      });
+      if(!o.generic)return;
+      if(!o.category)o.category="其他";
+      const existing=state.cards.find(c=>(c.generic||'').toLowerCase()===o.generic.toLowerCase());
+      if(existing){
+        Object.keys(o).forEach(key=>{if(key==='extraFields'){if(o.extraFields.length)existing.extraFields=o.extraFields;}else existing[key]=o[key];});
+        updated++;
+      }else{
+        o.id=uid();o.nextReview=todayStr();o.level=0;o.reviewCount=0;state.cards.push(o);added++;
+      }
+    });
+    saveData();veil.remove();buildQueue();render();
+    toast((added||updated)?`新增 ${added}・更新 ${updated}`:'沒有解析到有效資料');
+  };
+}
+
+(async function(){await loadData();buildQueue();render();})();
+</script>
+</body>
+</html>
